@@ -1,22 +1,36 @@
-import { Application } from 'pixi.js';
+import { Application, Assets, Texture } from 'pixi.js';
 import { World } from './core/world';
+
+const dimension = {
+  height: 576,
+  width: 1024,
+} as const;
 
 (async () => {
   // Create a new application
   const app = new Application();
 
   // Initialize the application
-  await app.init({ background: '#1099bb', resizeTo: window });
+  await app.init({
+    background: '#1099bb',
+    height: dimension.height,
+    width: dimension.width,
+  });
 
   // Append the application canvas to the document body
   document.getElementById('pixi-container')!.appendChild(app.canvas);
 
+  // load assets
+  await Assets.load('src/assets/images/background.png');
+
   const world = new World({
     dimension: {
-      height: app.screen.height,
-      width: app.screen.width,
+      height: 576,
+      width: 1024,
     },
+    backgroundTexture: Texture.from('src/assets/images/background.png'),
   });
+
   world.draw();
 
   app.stage.addChild(world);

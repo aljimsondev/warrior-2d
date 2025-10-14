@@ -1,4 +1,4 @@
-import { Container } from 'pixi.js';
+import { Container, Texture, TilingSprite } from 'pixi.js';
 import { Controller } from './controller';
 import { Player } from './player';
 
@@ -7,6 +7,7 @@ interface WorldOptions {
     height: number;
     width: number;
   };
+  backgroundTexture: Texture;
 }
 
 export class World extends Container {
@@ -16,17 +17,36 @@ export class World extends Container {
     width: 0,
     height: 0,
   };
+  backgroundSprite: TilingSprite;
+
   gravity: number = 0.8;
 
   controller: Controller;
 
-  constructor({ dimension }: WorldOptions) {
+  constructor({ dimension, backgroundTexture }: WorldOptions) {
     super();
     this.player = new Player();
     this.controller = new Controller();
     this.dimension = dimension;
+    this.backgroundSprite = new TilingSprite({
+      texture: backgroundTexture,
+      height: dimension.height,
+      width: dimension.width,
+    });
   }
+
   draw() {
+    // draw background sprite
+    // this.backgroundSprite.setSize(this.dimension.width, this.dimension.height);
+
+    this.backgroundSprite.tileScale.x = 4;
+    this.backgroundSprite.tileScale.y = 4;
+    this.backgroundSprite.tileTransform.position.set(
+      0,
+      this.backgroundSprite.height,
+    );
+    this.addChild(this.backgroundSprite);
+
     // draw player
     this.player.draw(100, 100);
     this.player.setSize(100);
@@ -35,8 +55,6 @@ export class World extends Container {
   }
 
   update() {
-    // stop player movement every frame
-
     this.applyGravity();
     this.player.update();
 
