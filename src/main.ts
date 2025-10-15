@@ -2,8 +2,8 @@ import { Application, Assets, Texture } from 'pixi.js';
 import { World } from './core/world';
 
 const dimension = {
-  height: 576,
-  width: 1024,
+  height: 432,
+  width: 576,
 } as const;
 
 (async () => {
@@ -24,13 +24,9 @@ const dimension = {
   await Assets.load('src/assets/images/background.png');
 
   const world = new World({
-    dimension: {
-      height: 576,
-      width: 1024,
-    },
+    dimension: dimension,
     backgroundTexture: Texture.from('src/assets/images/background.png'),
   });
-
   world.draw();
 
   app.stage.addChild(world);

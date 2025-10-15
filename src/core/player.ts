@@ -4,7 +4,7 @@ export class Player extends Container {
   velocity: Point = new Point(0, 0);
 
   // attributes
-  jumpPower: number = 20;
+  jumpPower: number = 8;
   speed: number = 5;
 
   constructor() {

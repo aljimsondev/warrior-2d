@@ -1,6 +1,7 @@
 import { Container, Texture, TilingSprite } from 'pixi.js';
 import { floorCollision } from '../assets/data/collision.data';
 import { transform2d } from '../helpers/transform2d';
+import { Block } from './block';
 import { Controller } from './controller';
 import { Player } from './player';
 
@@ -10,6 +11,7 @@ interface WorldOptions {
     width: number;
   };
   backgroundTexture: Texture;
+  scale?: number;
 }
 
 export class World extends Container {
@@ -21,50 +23,70 @@ export class World extends Container {
   };
   backgroundSprite: TilingSprite;
   map: number[][] = [];
+  blockSize = 16;
+  worldScale = 4;
 
   gravity: number = 0.8;
 
   controller: Controller;
 
-  constructor({ dimension, backgroundTexture }: WorldOptions) {
+  constructor({ dimension, backgroundTexture, scale = 4 }: WorldOptions) {
     super();
     this.player = new Player();
     this.controller = new Controller();
     this.dimension = dimension;
     this.backgroundSprite = new TilingSprite({
       texture: backgroundTexture,
-      height: dimension.height,
-      width: dimension.width,
     });
+
+    this.worldScale = scale;
   }
 
   draw() {
+    const viewportHeight = this.dimension.height / this.worldScale;
     // draw background sprite
-    // this.backgroundSprite.setSize(this.dimension.width, this.dimension.height);
-    this.drawMap();
-    this.backgroundSprite.tileScale.x = 4;
-    this.backgroundSprite.tileScale.y = 4;
-    this.backgroundSprite.tileTransform.position.set(
-      0,
-      this.backgroundSprite.height,
-    );
+    // this.backgroundSprite.tileScale.x = 4;
+    // this.backgroundSprite.tileScale.y = 4;
+    // this.backgroundSprite.tileTransform.position.set(
+    //   0,
+    //   -(this.backgroundSprite.texture.height - viewportHeight),
+    // );
     this.addChild(this.backgroundSprite);
-
+    console.log(this.backgroundSprite);
+    this.drawMap();
     // draw player
     this.player.draw(100, 100);
-    this.player.setSize(100);
+    this.player.setSize(this.blockSize);
 
     this.addChild(this.player);
+    // this.scale.set(this.worldScale);
   }
   drawMap() {
     this.map = transform2d(floorCollision, 36);
 
-    this.map.forEach((row) => {
-      row.forEach((tile) => {
-        if (tile === 202) console.log('draw collision block');
+    this.map.forEach((row, y) => {
+      row.forEach((tile, x) => {
+        if (tile === 202) {
+          const block = new Block();
+          block.x = x * this.blockSize;
+          block.y = y * this.blockSize;
+          // Scale the block
+
+          block.draw(this.blockSize, this.blockSize);
+          // block.scale.set(this.worldScale);
+          console.log({ x: block.x, y: block.y });
+          this.addChild(block);
+        }
       });
     });
   }
+  // For parallax scrolling based on player movement:
+  // updateCamera() {
+  //   // Scroll background at half speed of player for parallax effect
+  //   const parallaxSpeed = 0.5;
+  //   this.backgroundSprite.tileTransform.position.x =
+  //     -this.player.x * parallaxSpeed;
+  // }
   update() {
     this.applyGravity();
     this.player.update();
