@@ -5,6 +5,7 @@ import {
 } from '../assets/data/collision.data';
 import { transform2d } from '../helpers/transform2d';
 import { Block } from './block';
+import { CollisionManager } from './collision';
 import { Controller } from './controller';
 import { Physics } from './physics';
 import { Player } from './player';
@@ -21,6 +22,7 @@ interface WorldOptions {
 export class World extends Container {
   player: Player;
   physics = new Physics();
+  collisionManager = new CollisionManager();
   // world settings
   dimension = {
     width: 0,
@@ -65,7 +67,9 @@ export class World extends Container {
     this.player.draw(this.blockSize, this.blockSize);
     this.player.position.set(
       3 * this.blockSize,
-      this.dimension.height - 6 * this.blockSize, // place player position in the platform
+      this.dimension.height -
+        6 * this.blockSize -
+        this.collisionManager.collisionOffset, // place player position in the platform
     );
 
     this.addChild(this.player);
@@ -80,6 +84,9 @@ export class World extends Container {
 
     // bind controller keys updates
     this.bindKeys();
+    this.checkForHorizontalCollisions();
+    this.physics.applyGravity(this.player);
+    this.checkForVerticalCollisions();
 
     // world bound listener
     this.enforceWorldBounds();
@@ -173,7 +180,7 @@ export class World extends Container {
       this.player.velocity.y = 0;
       this.player.y = this.dimension.height - this.player.height;
       this.player.isGrounded = true;
-    } else this.physics.applyGravity(this.player);
+    }
 
     // check player move too far to the right
     if (this.player.x <= 0) {
@@ -186,6 +193,70 @@ export class World extends Container {
     // check if player goes of the top screen
     if (this.player.y <= 0) {
       this.player.y = 0;
+    }
+  }
+
+  checkForVerticalCollisions() {
+    const allBlocks = [...this.blocks.floors, ...this.blocks.platforms];
+
+    for (const block of allBlocks) {
+      const isCollided = this.collisionManager.checkAABBCollision(
+        this.player,
+        block,
+      );
+
+      if (isCollided) {
+        // check for vertical collision
+        // player is falling from the top
+        if (this.player.velocity.y > 0) {
+          console.log('top collision');
+
+          this.player.isGrounded = true;
+
+          this.player.velocity.y = 0;
+          this.player.y =
+            block.y -
+            this.player.height -
+            this.collisionManager.collisionOffset;
+          break;
+        }
+
+        if (this.player.velocity.y < 0) {
+          this.player.velocity.y = 0;
+          this.player.y =
+            block.y + block.height + this.collisionManager.collisionOffset;
+          break;
+        }
+      }
+    }
+  }
+  checkForHorizontalCollisions() {
+    const allBlocks = [...this.blocks.floors, ...this.blocks.platforms];
+
+    for (const block of allBlocks) {
+      const isCollided = this.collisionManager.checkAABBCollision(
+        this.player,
+        block,
+      );
+
+      if (isCollided) {
+        // check if player moving to right
+        if (this.player.velocity.x > 0) {
+          console.log('right collision');
+          this.player.velocity.x = 0;
+          this.player.x =
+            block.x - this.player.width - this.collisionManager.collisionOffset;
+          break;
+        }
+
+        if (this.player.velocity.x < 0) {
+          console.log('left collision');
+          this.player.velocity.x = 0;
+          this.player.x =
+            block.x + block.width + this.collisionManager.collisionOffset;
+          break;
+        }
+      }
     }
   }
 }

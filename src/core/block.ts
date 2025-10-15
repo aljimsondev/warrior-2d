@@ -1,6 +1,7 @@
-import { Container, Graphics } from 'pixi.js';
+import { Container, Graphics, Point } from 'pixi.js';
 
 export class Block extends Container {
+  velocity = new Point(0, 0);
   constructor() {
     super();
   }

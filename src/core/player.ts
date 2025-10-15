@@ -41,5 +41,4 @@ export class Player extends Container {
       this.isGrounded = false;
     }
   }
-  handleCollision() {}
 }
