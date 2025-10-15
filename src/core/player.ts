@@ -4,8 +4,9 @@ export class Player extends Container {
   velocity: Point = new Point(0, 0);
 
   // attributes
-  jumpPower: number = 8;
+  jumpPower: number = 10;
   speed: number = 5;
+  isGrounded: boolean = true;
 
   constructor() {
     super();
@@ -36,6 +37,9 @@ export class Player extends Container {
     this.velocity.x = 0;
   }
   jump() {
-    this.velocity.y = -this.jumpPower;
+    if (this.isGrounded) {
+      this.velocity.y = -this.jumpPower;
+      this.isGrounded = false;
+    }
   }
 }

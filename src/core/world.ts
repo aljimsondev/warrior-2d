@@ -1,8 +1,12 @@
 import { Container, Texture, TilingSprite } from 'pixi.js';
-import { floorCollision } from '../assets/data/collision.data';
+import {
+  floorCollision,
+  platformCollisions,
+} from '../assets/data/collision.data';
 import { transform2d } from '../helpers/transform2d';
 import { Block } from './block';
 import { Controller } from './controller';
+import { Physics } from './physics';
 import { Player } from './player';
 
 interface WorldOptions {
@@ -16,13 +20,17 @@ interface WorldOptions {
 
 export class World extends Container {
   player: Player;
+  physics = new Physics();
   // world settings
   dimension = {
     width: 0,
     height: 0,
   };
   backgroundSprite: TilingSprite;
-  map: number[][] = [];
+  blocks: {
+    floors: Block[];
+    platforms: Block[];
+  } = { floors: [], platforms: [] };
   blockSize = 16;
   worldScale = 4;
 
@@ -41,54 +49,30 @@ export class World extends Container {
 
     this.worldScale = scale;
   }
+  load() {
+    this.loadMap();
+  }
 
+  //draw world entities
   draw() {
-    const viewportHeight = this.dimension.height / this.worldScale;
-    // draw background sprite
-    // this.backgroundSprite.tileScale.x = 4;
-    // this.backgroundSprite.tileScale.y = 4;
-    // this.backgroundSprite.tileTransform.position.set(
-    //   0,
-    //   -(this.backgroundSprite.texture.height - viewportHeight),
-    // );
+    // add the background first rendering it as the first layer
     this.addChild(this.backgroundSprite);
-    console.log(this.backgroundSprite);
+
+    // draw the map
     this.drawMap();
+
     // draw player
-    this.player.draw(100, 100);
-    this.player.setSize(this.blockSize);
+    this.player.draw(this.blockSize, this.blockSize);
+    this.player.position.set(
+      3 * this.blockSize,
+      this.dimension.height - 6 * this.blockSize, // place player position in the platform
+    );
 
     this.addChild(this.player);
-    // this.scale.set(this.worldScale);
   }
-  drawMap() {
-    this.map = transform2d(floorCollision, 36);
 
-    this.map.forEach((row, y) => {
-      row.forEach((tile, x) => {
-        if (tile === 202) {
-          const block = new Block();
-          block.x = x * this.blockSize;
-          block.y = y * this.blockSize;
-          // Scale the block
-
-          block.draw(this.blockSize, this.blockSize);
-          // block.scale.set(this.worldScale);
-          console.log({ x: block.x, y: block.y });
-          this.addChild(block);
-        }
-      });
-    });
-  }
-  // For parallax scrolling based on player movement:
-  // updateCamera() {
-  //   // Scroll background at half speed of player for parallax effect
-  //   const parallaxSpeed = 0.5;
-  //   this.backgroundSprite.tileTransform.position.x =
-  //     -this.player.x * parallaxSpeed;
-  // }
+  // apply updates to world entities
   update() {
-    this.applyGravity();
     this.player.update();
 
     // stop player movement in every frame
@@ -97,14 +81,67 @@ export class World extends Container {
     // bind controller keys updates
     this.bindKeys();
 
-    // check player reaches the bottom
-    if (
-      this.player.y + this.player.height + this.player.velocity.y >=
-      this.dimension.height
-    ) {
-      this.player.velocity.y = 0;
-      this.player.y = this.dimension.height - this.player.height;
-    } else this.applyGravity();
+    // world bound listener
+    this.enforceWorldBounds();
+  }
+  // load the tile maps
+  loadMap() {
+    // load floor map
+    const floorMapBlocks: Block[] = [];
+    const platformMapBlocks: Block[] = [];
+
+    const floorMap2d = transform2d(floorCollision, 36);
+    const platformMap2d = transform2d(platformCollisions, 36);
+
+    floorMap2d.forEach((row, y) => {
+      row.forEach((tile, x) => {
+        if (tile === 202) {
+          const block = new Block();
+          block.x = x * this.blockSize;
+          block.y = y * this.blockSize;
+          // push block to the array
+          floorMapBlocks.push(block);
+        }
+      });
+    });
+
+    // loop the map
+    platformMap2d.forEach((row, y) => {
+      row.forEach((tile, x) => {
+        if (tile > 0) {
+          const block = new Block();
+          block.x = x * this.blockSize;
+          block.y = y * this.blockSize;
+          // push block to the array
+          platformMapBlocks.push(block);
+        }
+      });
+    });
+
+    this.blocks.floors = floorMapBlocks;
+    this.blocks.platforms = platformMapBlocks;
+  }
+
+  // render the tile maps
+  drawMap() {
+    this.drawFloor();
+    this.drawPlatforms();
+  }
+
+  drawPlatforms() {
+    this.blocks.platforms.map((block) => {
+      block.draw(this.blockSize, this.blockSize);
+
+      this.addChild(block);
+    });
+  }
+
+  drawFloor() {
+    this.blocks.floors.forEach((block) => {
+      block.draw(this.blockSize, this.blockSize);
+
+      this.addChild(block);
+    });
   }
 
   bindKeys() {
@@ -123,8 +160,32 @@ export class World extends Container {
       this.player.jump();
     }
   }
-  // physics related  functions
-  applyGravity() {
-    this.player.velocity.y += this.gravity;
+
+  /**
+   * Manage world bounts e.g. when player drops to the edge of the screen
+   */
+  enforceWorldBounds() {
+    // check player reaches the bottom
+    if (
+      this.player.y + this.player.height + this.player.velocity.y >=
+      this.dimension.height
+    ) {
+      this.player.velocity.y = 0;
+      this.player.y = this.dimension.height - this.player.height;
+      this.player.isGrounded = true;
+    } else this.physics.applyGravity(this.player);
+
+    // check player move too far to the right
+    if (this.player.x <= 0) {
+      this.player.x = 0;
+    }
+    // check player move too far to the right
+    if (this.player.x + this.player.width >= this.dimension.width) {
+      this.player.x = this.dimension.width - this.player.width;
+    }
+    // check if player goes of the top screen
+    if (this.player.y <= 0) {
+      this.player.y = 0;
+    }
   }
 }

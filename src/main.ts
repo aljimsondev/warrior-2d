@@ -27,6 +27,10 @@ const dimension = {
     dimension: dimension,
     backgroundTexture: Texture.from('src/assets/images/background.png'),
   });
+  // load the world assets, settings, environment etc.
+  world.load();
+
+  //render the world
   world.draw();
 
   app.stage.addChild(world);
