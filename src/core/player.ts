@@ -23,7 +23,6 @@ export class Player extends Container {
 
   update() {
     // player update goes here
-    this.y += this.velocity.y;
     this.x += this.velocity.x;
   }
   //player movements
@@ -42,4 +41,5 @@ export class Player extends Container {
       this.isGrounded = false;
     }
   }
+  handleCollision() {}
 }

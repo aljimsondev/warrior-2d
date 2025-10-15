@@ -8,7 +8,9 @@ export class Physics {
 
   applyGravity<T extends Entity>(entity: T) {
     // add gravity to the entity
+
     entity.velocity.y += this.gravity;
+    entity.y += entity.velocity.y;
   }
   accelerate<T extends Entity>({
     entity,
