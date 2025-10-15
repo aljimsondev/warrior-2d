@@ -1,4 +1,6 @@
 import { Container, Texture, TilingSprite } from 'pixi.js';
+import { floorCollision } from '../assets/data/collision.data';
+import { transform2d } from '../helpers/transform2d';
 import { Controller } from './controller';
 import { Player } from './player';
 
@@ -18,6 +20,7 @@ export class World extends Container {
     height: 0,
   };
   backgroundSprite: TilingSprite;
+  map: number[][] = [];
 
   gravity: number = 0.8;
 
@@ -38,7 +41,7 @@ export class World extends Container {
   draw() {
     // draw background sprite
     // this.backgroundSprite.setSize(this.dimension.width, this.dimension.height);
-
+    this.drawMap();
     this.backgroundSprite.tileScale.x = 4;
     this.backgroundSprite.tileScale.y = 4;
     this.backgroundSprite.tileTransform.position.set(
@@ -53,7 +56,15 @@ export class World extends Container {
 
     this.addChild(this.player);
   }
+  drawMap() {
+    this.map = transform2d(floorCollision, 36);
 
+    this.map.forEach((row) => {
+      row.forEach((tile) => {
+        if (tile === 202) console.log('draw collision block');
+      });
+    });
+  }
   update() {
     this.applyGravity();
     this.player.update();
