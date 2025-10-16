@@ -77,15 +77,23 @@ export class World extends Container {
 
   // apply updates to world entities
   update() {
+    // NOTE: ordering is important since wrong order causes weird behaviour and staggering effects
+    // bind controller keys updates
+    this.bindKeys();
+
+    // apply player class update
     this.player.update();
+
+    // check for horizontal collision
+    this.checkForHorizontalCollisions();
 
     // stop player movement in every frame
     this.player.stopMovement();
 
-    // bind controller keys updates
-    this.bindKeys();
-    this.checkForHorizontalCollisions();
+    // apply downward pull of the player entity
     this.physics.applyGravity(this.player);
+
+    // checking vertical collision after the downward pull
     this.checkForVerticalCollisions();
 
     // world bound listener
@@ -215,9 +223,7 @@ export class World extends Container {
 
           this.player.velocity.y = 0;
           this.player.y =
-            block.y -
-            this.player.height -
-            this.collisionManager.collisionOffset;
+            block.y - block.height - this.collisionManager.collisionOffset;
           break;
         }
 
