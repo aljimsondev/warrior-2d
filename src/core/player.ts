@@ -4,9 +4,10 @@ export class Player extends Container {
   velocity: Point = new Point(0, 0);
 
   // attributes
-  jumpPower: number = 10;
-  speed: number = 5;
+  jumpPower: number = 5.3;
+  speed: number = 1;
   isGrounded: boolean = true;
+  topSpeed = 2;
 
   constructor() {
     super();

@@ -1,7 +1,7 @@
 import { Entity } from '../types/entity';
 
 export class Physics {
-  gravity = 0.4;
+  gravity = 0.2;
   acceleration = 2;
   deceleration = 0;
   constructor() {}
