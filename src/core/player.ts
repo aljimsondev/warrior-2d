@@ -92,8 +92,7 @@ export class Player extends Container {
     }
 
     // check if player is falling
-    console.log(this.velocity.y);
-    if (this.velocity.y > 1) {
+    if (this.velocity.y > 0.5) {
       if (this.facing === 'left') {
         this.setAnimationState('FALL_LEFT');
       } else {
