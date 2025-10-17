@@ -151,11 +151,11 @@ export class World extends Container {
     // bind controller keys updates
     this.bindKeys();
 
-    this.physics.applyAcceleration({
-      deltaTime: ticker.deltaTime,
-      entity: this.player,
-    });
-    console.log(this.player.velocity.x);
+    // this.physics.applyAcceleration({
+    //   deltaTime: ticker.deltaTime,
+    //   entity: this.player,
+    // });
+
     // apply player class update
     this.player.update();
 
