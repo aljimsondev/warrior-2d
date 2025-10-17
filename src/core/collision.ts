@@ -2,7 +2,7 @@ import { Entity } from '../types/entity';
 import { Block } from './block';
 
 export class CollisionManager {
-  collisionOffset = 2;
+  collisionOffset = 0.8;
   constructor() {}
   checkForCollision<T extends Entity>({
     blocks,

@@ -1,12 +1,12 @@
-import { Entity } from '../types/entity';
+import { Entity, EntityWithVelocity } from '../types/entity';
 
 export class Physics {
-  gravity = 0.2;
+  gravity = 0.8;
   acceleration = 2;
   deceleration = 0;
   constructor() {}
 
-  applyGravity<T extends Entity>(entity: T) {
+  applyGravity<T extends EntityWithVelocity>(entity: T) {
     // add gravity to the entity
 
     entity.velocity.y += this.gravity;

@@ -6,6 +6,12 @@ export class Controller {
     KeyD: {
       pressed: false,
     },
+    KeyW: {
+      pressed: false,
+    },
+    KeyS: {
+      pressed: false,
+    },
     Space: {
       pressed: false,
     },

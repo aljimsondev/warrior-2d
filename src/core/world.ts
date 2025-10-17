@@ -1,4 +1,4 @@
-import { Container, Texture, TilingSprite } from 'pixi.js';
+import { Assets, Container, Texture, TilingSprite } from 'pixi.js';
 import {
   floorCollision,
   platformCollisions,
@@ -15,16 +15,21 @@ interface WorldOptions {
     height: number;
     width: number;
   };
-  backgroundTexture: Texture;
   scale?: number;
 }
 
 export class World extends Container {
-  player: Player;
+  player!: Player;
   physics = new Physics();
   collisionManager = new CollisionManager();
   // world settings
   dimension = {
+    width: 0,
+    height: 0,
+  };
+  debugHitbox = {
+    x: 0,
+    y: 0,
     width: 0,
     height: 0,
   };
@@ -40,21 +45,63 @@ export class World extends Container {
 
   controller: Controller;
 
-  constructor({ dimension, backgroundTexture, scale = 4 }: WorldOptions) {
+  constructor({ dimension, scale = 4 }: WorldOptions) {
     super();
-    this.player = new Player();
     this.controller = new Controller();
     this.dimension = dimension;
-    this.backgroundSprite = new TilingSprite({
-      texture: backgroundTexture,
-    });
-
     this.worldScale = scale;
+    this.backgroundSprite = new TilingSprite();
   }
-  load() {
+  async loadAssets() {
+    // load assets
+    await Assets.load('src/assets/images/background.png');
+    const warriorTexture = await Assets.load('src/assets/images/warrior.png');
+
+    await Assets.load({
+      alias: 'warrior',
+      src: 'src/assets/images/warrior.json',
+      data: {
+        texture: warriorTexture,
+      },
+    });
+  }
+
+  async load() {
+    await this.loadAssets();
+    await this.loadPlayer();
+    this.loadBackground();
     this.loadMap();
   }
 
+  async loadPlayer() {
+    const playerSprites = await Assets.load('warrior');
+    const textures = playerSprites.textures;
+
+    this.player = new Player({
+      textures: {
+        ATTACK: {
+          source: textures['Attack1.png'],
+          frameCount: 4,
+        },
+        HIT: {
+          source: textures['Take Hit - white silhouette.png'],
+          frameCount: 4,
+        },
+        IDLE: {
+          source: textures['Idle.png'],
+          frameCount: 8,
+        },
+        JUMP: {
+          source: textures['Jump.png'],
+          frameCount: 2,
+        },
+        RUN: {
+          source: textures['Run.png'],
+          frameCount: 8,
+        },
+      },
+    });
+  }
   //draw world entities
   draw() {
     // add the background first rendering it as the first layer
@@ -64,7 +111,9 @@ export class World extends Container {
     this.drawMap();
 
     // draw player
-    this.player.draw(this.blockSize, this.blockSize);
+    this.player.draw();
+    this.player.drawDebugBox();
+    this.player.drawDebugHitbox();
     this.player.position.set(
       3 * this.blockSize,
       this.dimension.height -
@@ -79,13 +128,14 @@ export class World extends Container {
   update() {
     // NOTE: ordering is important since wrong order causes weird behaviour and staggering effects
     // bind controller keys updates
+    // this.player.velocity.y = 0;
     this.bindKeys();
 
     // apply player class update
     this.player.update();
 
     // check for horizontal collision
-    this.checkForHorizontalCollisions();
+    // this.checkForHorizontalCollisions();
 
     // stop player movement in every frame
     this.player.stopMovement();
@@ -137,6 +187,14 @@ export class World extends Container {
     this.blocks.platforms = platformMapBlocks;
   }
 
+  loadBackground() {
+    const backgroundTexture = Texture.from('src/assets/images/background.png');
+    // load the background
+    this.backgroundSprite = new TilingSprite({
+      texture: backgroundTexture,
+    });
+  }
+
   // render the tile maps
   drawMap() {
     this.drawFloor();
@@ -181,6 +239,7 @@ export class World extends Container {
    */
   enforceWorldBounds() {
     // check player reaches the bottom
+    const hitbox = this.player.getGlobalHixboxPosition();
     if (
       this.player.y + this.player.height + this.player.velocity.y >=
       this.dimension.height
@@ -190,27 +249,40 @@ export class World extends Container {
       this.player.isGrounded = true;
     }
 
-    // check player move too far to the right
-    if (this.player.x <= 0) {
-      this.player.x = 0;
+    // check player move too far to the left
+    const offsetLeft = this.player.x - hitbox.x;
+
+    if (this.player.x <= offsetLeft) {
+      this.player.x = offsetLeft;
     }
     // check player move too far to the right
-    if (this.player.x + this.player.width >= this.dimension.width) {
-      this.player.x = this.dimension.width - this.player.width;
-    }
-    // check if player goes of the top screen
-    if (this.player.y <= 0) {
-      this.player.y = 0;
-    }
+
+    // if (this.player.x + this.player.width >= this.dimension.width) {
+    //   this.player.x =
+    //     this.dimension.width -
+    //     this.player.width +
+    //     this.player.width * 0.5 -
+    //     hitbox.width * 0.5 -
+    //     hitbox.offset;
+    // }
+    // // check if player goes of the top screen
+    // if (this.player.y <= 0) {
+    //   this.player.y = 0;
+    // }
   }
 
   checkForVerticalCollisions() {
-    const allBlocks = [...this.blocks.floors, ...this.blocks.platforms];
+    const allBlocks = [
+      ...this.blocks.floors,
+      // ...this.blocks.platforms
+    ];
+    const hitbox = this.player.getGlobalHixboxPosition();
+    const collistionOffset = this.collisionManager.collisionOffset;
 
     for (const block of allBlocks) {
       const isCollided = this.collisionManager.checkAABBCollision(
-        this.player,
         block,
+        hitbox,
       );
 
       if (isCollided) {
@@ -220,17 +292,19 @@ export class World extends Container {
           console.log('top collision');
 
           this.player.isGrounded = true;
-
           this.player.velocity.y = 0;
-          this.player.y =
-            block.y - block.height - this.collisionManager.collisionOffset;
+          const offset = this.player.height - hitbox.offset;
+          hitbox.y = block.y - offset - collistionOffset - 20;
+
           break;
         }
 
         if (this.player.velocity.y < 0) {
-          this.player.velocity.y = 0;
-          this.player.y =
-            block.y + block.height + this.collisionManager.collisionOffset;
+          console.log('bottom collision');
+          // const offset = hitbox.y - this.y;
+
+          // this.player.velocity.y = 0;
+          // this.player.y = block.y + block.height + this.player.height;
           break;
         }
       }
@@ -240,26 +314,31 @@ export class World extends Container {
     const allBlocks = [...this.blocks.floors, ...this.blocks.platforms];
 
     for (const block of allBlocks) {
+      const hitbox = this.player.getGlobalHixboxPosition();
       const isCollided = this.collisionManager.checkAABBCollision(
         this.player,
         block,
       );
-
       if (isCollided) {
         // check if player moving to right
         if (this.player.velocity.x > 0) {
           console.log('right collision');
+
           this.player.velocity.x = 0;
-          this.player.x =
-            block.x - this.player.width - this.collisionManager.collisionOffset;
+          // this.player.x =
+          //   block.x - this.player.width - this.collisionManager.collisionOffset;
           break;
         }
-
         if (this.player.velocity.x < 0) {
           console.log('left collision');
           this.player.velocity.x = 0;
-          this.player.x =
-            block.x + block.width + this.collisionManager.collisionOffset;
+          console.log(hitbox);
+          // this.player.x =
+          //   block.x +
+          //   block.width +
+          //   this.collisionManager.collisionOffset -
+          //   this.player.x -
+          //   hitbox.x;
           break;
         }
       }

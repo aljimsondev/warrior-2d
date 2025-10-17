@@ -1,5 +1,6 @@
-import { Application, Assets, Texture } from 'pixi.js';
+import { Application } from 'pixi.js';
 import { World } from './core/world';
+import { hitboxExample } from './example/hitbox.example';
 
 const dimension = {
   height: 432,
@@ -7,6 +8,7 @@ const dimension = {
 } as const;
 
 (async () => {
+  return hitboxExample();
   // Create a new application
   const app = new Application();
 
@@ -20,15 +22,11 @@ const dimension = {
   // Append the application canvas to the document body
   document.getElementById('pixi-container')!.appendChild(app.canvas);
 
-  // load assets
-  await Assets.load('src/assets/images/background.png');
-
   const world = new World({
     dimension: dimension,
-    backgroundTexture: Texture.from('src/assets/images/background.png'),
   });
   // load the world assets, settings, environment etc.
-  world.load();
+  await world.load();
 
   //render the world
   world.draw();
