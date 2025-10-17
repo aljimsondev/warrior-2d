@@ -16,22 +16,20 @@ export class Player extends Container {
   speed: number = 1;
   isGrounded: boolean = true;
   topSpeed = 2;
+  facing: 'right' | 'left' = 'right';
+
+  // graphics
   textures: EntityTexture;
   animationState: PlayerAnimationState = 'IDLE';
   sprite!: AnimatedSprite;
+
+  // hitbox
   hitbox = {
     x: 0,
     y: 0,
     width: 30,
     height: 50,
     offset: 5,
-  };
-  // hitbox sides
-  sides = {
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
   };
 
   constructor({ textures }: PlayerOptions) {
@@ -56,9 +54,6 @@ export class Player extends Container {
     this.sprite.animationSpeed = 0.1;
 
     this.addChild(this.sprite);
-  }
-  setHitboxSides() {
-    this.sides.left = this.x - this.hitbox.x;
   }
 
   getGlobalHixboxPosition() {
@@ -87,25 +82,48 @@ export class Player extends Container {
   update() {
     // player update goes here
     this.x += this.velocity.x;
+
+    if (this.velocity.x === 0 && this.velocity.y === 0) {
+      if (this.facing === 'left') {
+        this.setAnimationState('IDLE_LEFT');
+      } else {
+        this.setAnimationState('IDLE');
+      }
+    }
+
+    // check if player is falling
+    console.log(this.velocity.y);
+    if (this.velocity.y > 1) {
+      if (this.facing === 'left') {
+        this.setAnimationState('FALL_LEFT');
+      } else {
+        this.setAnimationState('FALL');
+      }
+    }
   }
   //player movements
   moveLeft() {
     this.velocity.x = -this.speed;
-    this.setAnimationState('RUN');
+    if (this.isGrounded) this.setAnimationState('RUN_LEFT');
+    this.facing = 'left';
   }
   moveRight() {
     this.velocity.x = this.speed;
-    this.setAnimationState('RUN');
+    if (this.isGrounded) this.setAnimationState('RUN');
+    this.facing = 'right';
   }
   stopMovement() {
     this.velocity.x = 0;
-    this.setAnimationState('IDLE');
   }
   jump() {
     if (this.isGrounded) {
       this.velocity.y = -this.jumpPower;
       this.isGrounded = false;
-      this.setAnimationState('JUMP');
+      if (this.facing === 'left') {
+        this.setAnimationState('JUMP_LEFT');
+      } else {
+        this.setAnimationState('JUMP');
+      }
     }
   }
 

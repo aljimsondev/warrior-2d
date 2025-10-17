@@ -77,7 +77,7 @@ export class World extends Container {
   async loadPlayer() {
     const playerSprites = await Assets.load('warrior');
     const textures = playerSprites.textures;
-
+    console.log(textures);
     this.player = new Player({
       textures: {
         ATTACK: {
@@ -99,6 +99,26 @@ export class World extends Container {
         RUN: {
           source: textures['Run.png'],
           frameCount: 8,
+        },
+        IDLE_LEFT: {
+          source: textures['IdleLeft.png'],
+          frameCount: 8,
+        },
+        JUMP_LEFT: {
+          source: textures['JumpLeft.png'],
+          frameCount: 2,
+        },
+        RUN_LEFT: {
+          source: textures['RunLeft.png'],
+          frameCount: 8,
+        },
+        FALL: {
+          source: textures['Fall.png'],
+          frameCount: 2,
+        },
+        FALL_LEFT: {
+          source: textures['FallLeft.png'],
+          frameCount: 2,
         },
       },
     });
@@ -129,7 +149,6 @@ export class World extends Container {
   update() {
     // NOTE: ordering is important since wrong order causes weird behaviour and staggering effects
     // bind controller keys updates
-    // this.player.velocity.y = 0;
     this.bindKeys();
 
     // apply player class update

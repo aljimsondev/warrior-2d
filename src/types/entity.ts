@@ -16,10 +16,15 @@ export interface EntityWithVelocity extends Entity {
 
 enum PlayerStates {
   'IDLE' = 'IDLE',
+  'IDLE_LEFT' = 'IDLE_LEFT',
   'JUMP' = 'JUMP',
+  'JUMP_LEFT' = 'JUMP_LEFT',
   'ATTACK' = 'ATTACK',
   'HIT' = 'HIT',
   'RUN' = 'RUN',
+  'RUN_LEFT' = 'RUN_LEFT',
+  'FALL' = 'FALL',
+  'FALL_LEFT' = 'FALL_LEFT',
 }
 
 export type EntityTexture = {
