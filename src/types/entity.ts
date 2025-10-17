@@ -14,6 +14,11 @@ export interface EntityWithVelocity extends Entity {
   };
 }
 
+export interface EntityWithAcceration extends EntityWithVelocity {
+  speed: number;
+  topSpeed: number;
+}
+
 enum PlayerStates {
   'IDLE' = 'IDLE',
   'IDLE_LEFT' = 'IDLE_LEFT',

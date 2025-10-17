@@ -15,7 +15,7 @@ export class Player extends Container {
   jumpPower: number = 5.3;
   speed: number = 1;
   isGrounded: boolean = true;
-  topSpeed = 2;
+  topSpeed = 5;
   facing: 'right' | 'left' = 'right';
 
   // graphics

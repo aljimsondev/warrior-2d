@@ -1,4 +1,4 @@
-import { Assets, Container, Texture, TilingSprite } from 'pixi.js';
+import { Assets, Container, Texture, Ticker, TilingSprite } from 'pixi.js';
 import {
   floorCollision,
   platformCollisions,
@@ -146,11 +146,16 @@ export class World extends Container {
   }
 
   // apply updates to world entities
-  update() {
+  update(ticker: Ticker) {
     // NOTE: ordering is important since wrong order causes weird behaviour and staggering effects
     // bind controller keys updates
     this.bindKeys();
 
+    this.physics.applyAcceleration({
+      deltaTime: ticker.deltaTime,
+      entity: this.player,
+    });
+    console.log(this.player.velocity.x);
     // apply player class update
     this.player.update();
 
