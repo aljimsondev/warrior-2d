@@ -22,7 +22,7 @@ export class Player extends Container {
   hitbox = {
     x: 0,
     y: 0,
-    width: 25,
+    width: 30,
     height: 50,
     offset: 5,
   };

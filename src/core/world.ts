@@ -40,6 +40,7 @@ export class World extends Container {
   } = { floors: [], platforms: [] };
   blockSize = 16;
   worldScale = 4;
+  block = new Block();
 
   gravity: number = 0.8;
 
@@ -135,7 +136,7 @@ export class World extends Container {
     this.player.update();
 
     // check for horizontal collision
-    // this.checkForHorizontalCollisions();
+    this.checkForHorizontalCollisions();
 
     // stop player movement in every frame
     this.player.stopMovement();
@@ -211,7 +212,7 @@ export class World extends Container {
 
   drawFloor() {
     this.blocks.floors.forEach((block) => {
-      block.draw(this.blockSize, this.blockSize);
+      block.draw(this.blockSize, this.blockSize, 'blue');
 
       this.addChild(block);
     });
@@ -240,42 +241,10 @@ export class World extends Container {
   enforceWorldBounds() {
     // check player reaches the bottom
     const hitbox = this.player.getGlobalHixboxPosition();
-    if (
-      this.player.y + this.player.height + this.player.velocity.y >=
-      this.dimension.height
-    ) {
-      this.player.velocity.y = 0;
-      this.player.y = this.dimension.height - this.player.height;
-      this.player.isGrounded = true;
-    }
-
-    // check player move too far to the left
-    const offsetLeft = this.player.x - hitbox.x;
-
-    if (this.player.x <= offsetLeft) {
-      this.player.x = offsetLeft;
-    }
-    // check player move too far to the right
-
-    // if (this.player.x + this.player.width >= this.dimension.width) {
-    //   this.player.x =
-    //     this.dimension.width -
-    //     this.player.width +
-    //     this.player.width * 0.5 -
-    //     hitbox.width * 0.5 -
-    //     hitbox.offset;
-    // }
-    // // check if player goes of the top screen
-    // if (this.player.y <= 0) {
-    //   this.player.y = 0;
-    // }
   }
 
   checkForVerticalCollisions() {
-    const allBlocks = [
-      ...this.blocks.floors,
-      // ...this.blocks.platforms
-    ];
+    const allBlocks = [...this.blocks.floors, ...this.blocks.platforms];
     const hitbox = this.player.getGlobalHixboxPosition();
     const collistionOffset = this.collisionManager.collisionOffset;
 
@@ -294,17 +263,20 @@ export class World extends Container {
           this.player.isGrounded = true;
           this.player.velocity.y = 0;
           const offset = this.player.height - hitbox.offset;
-          hitbox.y = block.y - offset - collistionOffset - 20;
-
+          this.player.y = block.y - offset - collistionOffset;
           break;
         }
 
         if (this.player.velocity.y < 0) {
           console.log('bottom collision');
-          // const offset = hitbox.y - this.y;
 
-          // this.player.velocity.y = 0;
-          // this.player.y = block.y + block.height + this.player.height;
+          const hitboxDistance = hitbox.y - this.player.y;
+          const offset = hitboxDistance - block.height;
+
+          const newPosY = block.y - offset + collistionOffset;
+          this.player.y = newPosY;
+
+          this.player.velocity.y = 0;
           break;
         }
       }
@@ -312,33 +284,38 @@ export class World extends Container {
   }
   checkForHorizontalCollisions() {
     const allBlocks = [...this.blocks.floors, ...this.blocks.platforms];
+    const collistionOffset = this.collisionManager.collisionOffset;
+    const hitbox = this.player.getGlobalHixboxPosition();
 
     for (const block of allBlocks) {
-      const hitbox = this.player.getGlobalHixboxPosition();
       const isCollided = this.collisionManager.checkAABBCollision(
-        this.player,
+        hitbox,
         block,
       );
       if (isCollided) {
         // check if player moving to right
         if (this.player.velocity.x > 0) {
           console.log('right collision');
+          const hitboxDistance = hitbox.x - this.player.x;
 
+          const offset = hitboxDistance + hitbox.width;
+
+          const newPosX = block.x - offset - collistionOffset;
+
+          this.player.x = newPosX;
           this.player.velocity.x = 0;
-          // this.player.x =
-          //   block.x - this.player.width - this.collisionManager.collisionOffset;
           break;
         }
         if (this.player.velocity.x < 0) {
           console.log('left collision');
+          const hitboxDistance = hitbox.x - this.player.x;
+
+          const offset = hitboxDistance - block.width;
+
+          const newPosX = block.x - offset + collistionOffset;
+
+          this.player.x = newPosX;
           this.player.velocity.x = 0;
-          console.log(hitbox);
-          // this.player.x =
-          //   block.x +
-          //   block.width +
-          //   this.collisionManager.collisionOffset -
-          //   this.player.x -
-          //   hitbox.x;
           break;
         }
       }

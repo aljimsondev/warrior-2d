@@ -6,12 +6,12 @@ export class Block extends Container {
     super();
   }
 
-  draw(width: number, height: number) {
+  draw(width: number, height: number, color: string = 'green') {
     const obj = new Graphics();
 
     obj.rect(0, 0, width, height);
     obj.fill({
-      color: 'green',
+      color: color,
     });
 
     this.addChild(obj);

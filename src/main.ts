@@ -1,6 +1,5 @@
 import { Application } from 'pixi.js';
 import { World } from './core/world';
-import { hitboxExample } from './example/hitbox.example';
 
 const dimension = {
   height: 432,
@@ -8,7 +7,6 @@ const dimension = {
 } as const;
 
 (async () => {
-  return hitboxExample();
   // Create a new application
   const app = new Application();
 
