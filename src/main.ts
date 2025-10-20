@@ -1,5 +1,6 @@
 import { Application } from 'pixi.js';
 import { World } from './core/world';
+import { cameraExample } from './example/camera.example';
 
 const dimension = {
   height: 432,
@@ -8,6 +9,8 @@ const dimension = {
 
 (async () => {
   // Create a new application
+
+  return cameraExample();
   const app = new Application();
 
   // Initialize the application
@@ -20,6 +23,7 @@ const dimension = {
   // Append the application canvas to the document body
   document.getElementById('pixi-container')!.appendChild(app.canvas);
 
+  // load the world first
   const world = new World({
     dimension: dimension,
   });
@@ -28,7 +32,6 @@ const dimension = {
 
   //render the world
   world.draw();
-
   app.stage.addChild(world);
   // Listen for animate update
   app.ticker.add((time) => {

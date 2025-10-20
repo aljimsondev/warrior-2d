@@ -5,6 +5,7 @@ import {
 } from '../assets/data/collision.data';
 import { transform2d } from '../helpers/transform2d';
 import { Block } from './block';
+import { Camera } from './camera';
 import { CollisionManager } from './collision';
 import { Controller } from './controller';
 import { Physics } from './physics';
@@ -46,12 +47,37 @@ export class World extends Container {
 
   controller: Controller;
 
+  camera!: Camera;
+  worldContainer!: Container; // Container that holds all world elements
+  uiContainer!: Container; // Container for UI that doesn't move with camera
+
   constructor({ dimension, scale = 4 }: WorldOptions) {
     super();
     this.controller = new Controller();
     this.dimension = dimension;
     this.worldScale = scale;
     this.backgroundSprite = new TilingSprite();
+
+    // Create containers
+    this.worldContainer = new Container();
+    this.uiContainer = new Container();
+
+    // Add containers to world
+    this.addChild(this.worldContainer);
+    this.addChild(this.uiContainer);
+
+    // Initialize camera
+    // Assuming viewport matches dimension for now
+    this.camera = new Camera({
+      viewportWidth: dimension.width,
+      viewportHeight: dimension.height,
+      worldWidth: 36 * this.blockSize, // 36 tiles wide (from your collision data)
+      worldHeight: 20 * this.blockSize, // Adjust based on your map height
+      smoothing: 0.1,
+      deadzoneWidth: this.dimension.width * 0.25,
+      deadzoneHeight: this.dimension.height * 0.3,
+      lookAheadDistance: 60,
+    });
   }
   async loadAssets() {
     // load assets
@@ -126,7 +152,7 @@ export class World extends Container {
   //draw world entities
   draw() {
     // add the background first rendering it as the first layer
-    this.addChild(this.backgroundSprite);
+    this.worldContainer.addChild(this.backgroundSprite);
 
     // draw the map
     this.drawMap();
@@ -142,7 +168,15 @@ export class World extends Container {
         this.collisionManager.collisionOffset, // place player position in the platform
     );
 
-    this.addChild(this.player);
+    this.worldContainer.addChild(this.player);
+
+    // Snap camera to player initially
+    this.camera.snapTo({
+      x: this.player.x,
+      y: this.player.y,
+      width: this.player.width,
+      height: this.player.height,
+    });
   }
 
   // apply updates to world entities
@@ -158,6 +192,19 @@ export class World extends Container {
 
     // apply player class update
     this.player.update();
+
+    this.camera.follow(
+      {
+        x: this.player.x,
+        y: this.player.y,
+        width: this.player.width,
+        height: this.player.height,
+      },
+      'left',
+    );
+
+    // Apply camera transform to world
+    this.camera.applyTransform(this.worldContainer);
 
     // check for horizontal collision
     this.checkForHorizontalCollisions();

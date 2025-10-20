@@ -13,6 +13,10 @@ export class Block extends Container {
     obj.fill({
       color: color,
     });
+    obj.stroke({
+      color: '#000',
+      width: 2,
+    });
 
     this.addChild(obj);
   }
